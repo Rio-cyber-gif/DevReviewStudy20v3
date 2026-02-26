@@ -1,0 +1,222 @@
+export const missions = [
+    {
+        id: 1,
+        title: "データの非破壊的な更新",
+        objective: "元のデータを直接書き換えると、システムが変更を検知できません。新しいコピーを作成して更新してください。",
+        hint: "元の配列を操作するメソッド（pushなど）ではなく、展開構文などを用いて新しい配列を作成しましょう。",
+        code: "const addItem = (items, newItem) => {\n  items.push(newItem);\n  return items;\n};",
+        correctCode: "const addItem = (items, newItem) => {\n  return [...items, newItem];\n};",
+        keywords: ["..."],
+        removeKeywords: ["push"],
+        explanation: "多くのモダンなUIライブラリは、データの『参照先』が変わったかどうかで変更を判断します。既存のデータを直接いじると、中身が変わっても場所が変わらないため、画面が更新されない原因になります。"
+    },
+    {
+        id: 2,
+        title: "存在しないデータへの安全なアクセス",
+        objective: "深い階層のデータにアクセスする際、途中の値が空（nullなど）だとクラッシュします。安全にアクセスしてください。",
+        hint: "途中のプロパティが存在しない場合に undefined を返す、安全なアクセス演算子（?.）を使いましょう。",
+        code: "const UserName = ({ user }) => {\n  return <div>{user.profile.name}</div>;\n};",
+        correctCode: "const UserName = ({ user }) => {\n  return <div>{user?.profile?.name}</div>;\n};",
+        keywords: ["?."],
+        removeKeywords: [],
+        explanation: "非同期で取得するデータは、最初の時点ではまだ空であることが多いです。存在しない階層を無理に辿ろうとするとアプリ全体が停止するため、安全なアクセスを常に心がける必要があります。"
+    },
+    {
+        id: 3,
+        title: "データの型の明示的な変換",
+        objective: "入力フォームから受け取った値は文字として扱われます。計算の前に数値へ変換してください。",
+        hint: "計算を行う前に、文字列を数値型（Numberなど）にキャストしましょう。",
+        code: "const handleUpdate = (value) => {\n  const nextValue = value + 1;\n  console.log(nextValue);\n};",
+        correctCode: "const handleUpdate = (value) => {\n  const nextValue = Number(value) + 1;\n  console.log(nextValue);\n};",
+        keywords: ["Number", "parseInt"],
+        removeKeywords: [],
+        explanation: "画面上の入力欄から来る値は、見た目が数字でもプログラム上は『文字』です。'10' + 1 が '101' になってしまうような計算ミスを防ぐため、入り口で型を整えるのは鉄則です。"
+    },
+    {
+        id: 4,
+        title: "意図しない「0」の表示防止",
+        objective: "リストが空かどうかを判定する際、数値の0がそのまま画面に出てしまうのを防いでください。",
+        hint: "数値の長さを評価するだけでなく、論理値（true/false）へ明示的に変換するか、比較演算子を使いましょう。",
+        code: "const List = ({ items }) => {\n  return items.length && <p>データあり</p>;\n};",
+        correctCode: "const List = ({ items }) => {\n  return !!items.length && <p>データあり</p>;\n};",
+        keywords: ["!!", "> 0"],
+        removeKeywords: [],
+        explanation: "特定の環境では、条件式の評価結果である『0』がそのままテキストとして画面に残ってしまいます。論理判定を確実に行うことで、クリーンな表示を維持できます。"
+    },
+    {
+        id: 5,
+        title: "描画に関わらない値の管理",
+        objective: "画面表示を更新する必要がない値（内部的なIDなど）を、更新を伴う「状態」で管理しないでください。",
+        hint: "値を保持しつつも、変更時に画面の再描画を発生させない専用の保持機構（参照保持）を使いましょう。",
+        code: "const [timerId, setTimerId] = useState(null);",
+        correctCode: "const timerId = useRef(null);",
+        keywords: ["useRef"],
+        removeKeywords: ["useState"],
+        explanation: "すべての値を『状態監視対象』にしてしまうと、値が変わるたびに不要な描画計算が走り、アプリの動作が重くなります。用途に応じて保管場所を使い分けましょう。"
+    },
+    {
+        id: 6,
+        title: "変数名の重複（シャドウイング）回避",
+        objective: "外部の変数名とループ内の引数名が同じです。混乱とバグを避けるために名前を区別してください。",
+        hint: "コレクションを扱う際は複数形（items）、個々の要素を扱う際は単数形（item）など、明確に変えましょう。",
+        code: "items.map((items) => <li>{items.id}</li>);",
+        correctCode: "items.map((item) => <li>{item.id}</li>);",
+        keywords: ["item"],
+        removeKeywords: ["(items)"],
+        explanation: "同じ名前が重なると、プログラムはより内側のスコープを優先します。自分が今どちらを操作しているか見失うことが、多くの参照エラーの原因になります。"
+    },
+    {
+        id: 7,
+        title: "定数の定義場所の最適化",
+        objective: "処理のたびに毎回作り直す必要のない固定値は、関数の外側に置いてください。",
+        hint: "コンポーネントの実行に関わらず不変な値は、最上位レベルに定義しましょう。",
+        code: "function App() {\n  const CONFIG = { key: 'val' };\n  return <div>{CONFIG.key}</div>;\n}",
+        correctCode: "const CONFIG = { key: 'val' };\nfunction App() {\n  return <div>{CONFIG.key}</div>;\n}",
+        keywords: ["const"],
+        removeKeywords: [],
+        explanation: "関数の内側にある定数は、実行のたびにメモリ確保が行われます。外に出すことでリソースを節約し、それが『静的な設定値』であることを明確に示せます。"
+    },
+    {
+        id: 8,
+        title: "通信の効率化（一括取得）",
+        objective: "個別に何度も通信を行うと処理が遅延します。親の階層で一括してデータを取得してください。",
+        hint: "ループ内で個別に通信を待機するのではなく、まとめてデータを取得（一括フェッチ）する設計にしましょう。",
+        code: "items.map(id => <Detail id={id} />) // 内側で個別通信",
+        correctCode: "const allData = await fetchAll(ids); // 親で一括取得",
+        keywords: ["fetchAll", "Promise.all"],
+        removeKeywords: [],
+        explanation: "リクエストの回数が増えるほどネットワークの渋滞が発生します。まとめて取ってから配ることで、ユーザーの待ち時間を劇的に減らせます。"
+    },
+    {
+        id: 9,
+        title: "必要な属性のみの受け渡し",
+        objective: "データを丸ごと展開して渡すと不要な情報が漏れます。必要なものだけに絞ってください。",
+        hint: "スプレッド構文で全て渡すのではなく、必要なプロパティだけを明示的に抽出して渡しましょう。",
+        code: "const Profile = (props) => <div {...props} />;",
+        correctCode: "const Profile = ({ name }) => <div>{name}</div>;",
+        keywords: ["{ name }"],
+        removeKeywords: ["{...props}"],
+        explanation: "不要な情報をHTML要素に流すと、アクセシビリティの問題やセキュリティ上のリスクが生じることがあります。インターフェースは最小限に保つのが安全です。"
+    },
+    {
+        id: 10,
+        title: "外部通信の失敗への備え",
+        objective: "通信が常に成功するとは限りません。失敗した時の処理を必ず含めてください。",
+        hint: "エラーを捕捉する構文（try-catchなど）を使い、失敗したことをユーザーに知らせる処理を入れましょう。",
+        code: "const load = async () => {\n  const res = await api.get();\n  setData(res);\n};",
+        correctCode: "const load = async () => {\n  try {\n    const res = await api.get();\n    setData(res);\n  } catch (err) {\n    showError('通信失敗');\n  }\n};",
+        keywords: ["try", "catch"],
+        removeKeywords: [],
+        explanation: "ネットワーク環境は不安定です。成功した時だけを想定したコードは、何かあった時にユーザーをフリーズした画面で放置させることになります。"
+    },
+    {
+        id: 11,
+        title: "環境変数の正しい参照",
+        objective: "開発環境の設定値を参照する際、現在の実行環境（ビルドツール）の仕様に従ってください。",
+        hint: "古い環境用の参照方式（process.envなど）ではなく、現在の環境の標準的な方式を使いましょう。",
+        code: "const apiKey = process.env.API_KEY;",
+        correctCode: "const apiKey = import.meta.env.VITE_API_KEY;",
+        keywords: ["import.meta.env"],
+        removeKeywords: ["process.env"],
+        explanation: "開発ツールが変われば、環境変数の読み込み方も変わります。古い知識のまま書かれたコードは動作しません。"
+    },
+    {
+        id: 12,
+        title: "未定義パターンの明示的な排除",
+        objective: "条件分岐ですべてのケースに当てはまらなかった際、問題を隠さずエラーとして扱ってください。",
+        hint: "if文やswitch文の最後で、想定外の値が来た場合に明示的に例外を投げるようにしましょう。",
+        code: "if (type === 'A') return <A />;\nif (type === 'B') return <B />;",
+        correctCode: "if (type === 'A') return <A />;\nif (type === 'B') return <B />;\nthrow new Error('不明なタイプ');",
+        keywords: ["throw", "Error"],
+        removeKeywords: [],
+        explanation: "『何もしない』ことは、バグの原因を迷宮入りさせます。異常があればその場で声を上げる（Fail Fast）設計が、堅牢なアプリを作ります。"
+    },
+    {
+        id: 13,
+        title: "共通ロジックの部品化",
+        objective: "同じような処理が複数の場所に散らばっています。一箇所にまとめて再利用できるようにしてください。",
+        hint: "独自のロジックとして切り出し、複数のコンポーネントから呼び出せる仕組みを活用しましょう。",
+        code: "// 箇所1: useEffect(...) \n// 箇所2: useEffect(...)",
+        correctCode: "const useSharedLogic = () => { ... };",
+        keywords: ["use"],
+        removeKeywords: [],
+        explanation: "同じコードをコピペすると、修正の際にすべての場所を直す手間とリスクが生じます。ロジックを部品化して管理しましょう。"
+    },
+    {
+        id: 14,
+        title: "数値や文字列の定数化",
+        objective: "直接書かれた「1」や「'active'」が何を指すか不明です。名前をつけて定義してください。",
+        hint: "マジックナンバーを避け、意味のわかる定数オブジェクトにまとめましょう。",
+        code: "if (status === 1) { ... }",
+        correctCode: "const STATUS = { ACTIVE: 1 };\nif (status === STATUS.ACTIVE) { ... }",
+        keywords: ["STATUS"],
+        removeKeywords: ["=== 1"],
+        explanation: "半年後の自分がコードを見たとき、その『1』が何を表していたか思い出せますか？ 名前に意味を込めることが、コードをドキュメントに変えます。"
+    },
+    {
+        id: 15,
+        title: "大量データの表示最適化",
+        objective: "一度に大量のデータを画面に描画すると重くなります。表示範囲を絞ってください。",
+        hint: "データを全件描画せず、一部のみを取り出す（sliceなど）か、スクロールに合わせて描画するようにしましょう。",
+        code: "data.map(item => <Card key={item.id} />)",
+        correctCode: "data.slice(0, 10).map(item => <Card key={item.id} />)",
+        keywords: ["slice"],
+        removeKeywords: [],
+        explanation: "ブラウザが処理できる要素数には限界があります。ユーザーに見えている分だけを効率よく描画するのがプロの技です。"
+    },
+    {
+        id: 16,
+        title: "不具合情報のログ出力",
+        objective: "エラーを捕まえても、何もしなければ原因がわかりません。記録を残してください。",
+        hint: "エラーを捕捉した場所（catch内など）で、エラー内容をコンソールや監視ツールに出力しましょう。",
+        code: "try { ... } catch (e) { }",
+        correctCode: "try { ... } catch (e) { console.error(e); }",
+        keywords: ["console.error"],
+        removeKeywords: [],
+        explanation: "例外の握り潰しは最も危険な行為の一つです。エラーが起きたという事実とその中身を可視化することで、迅速な修正が可能になります。"
+    },
+    {
+        id: 17,
+        title: "通信のタイムアウト設定",
+        objective: "返事が来ない通信をずっと待ち続けるとアプリが固まります。期限を決めて中断してください。",
+        hint: "一定時間経過したら通信を強制終了（Abort）する仕組みを取り入れましょう。",
+        code: "fetch('/api/data')",
+        correctCode: "const ctrl = new AbortController();\nfetch('/api/data', { signal: ctrl.signal });\nsetTimeout(() => ctrl.abort(), 5000);",
+        keywords: ["AbortController"],
+        removeKeywords: [],
+        explanation: "外部の環境は不安定です。自分のアプリを守るために、どれくらいまで待つかを決めておくのは防御的プログラミングの基本です。"
+    },
+    {
+        id: 18,
+        title: "巨大なコードの分割",
+        objective: "一つの機能が大きすぎて読みづらいです。役割ごとに分割してください。",
+        hint: "表示部分や計算部分など、関心の分離を意識して、プログラムを小さな単位へ分けましょう。",
+        code: "function HugeComp() { /* 200行の記述 */ }",
+        correctCode: "function SubComp() { ... }\nfunction MainComp() { return <SubComp />; }",
+        keywords: ["function"],
+        removeKeywords: [],
+        explanation: "大きな塊はバグの温床になります。小さな部品を組み合わせて大きな機能を作る方が、テストもしやすく保守性が高まります。"
+    },
+    {
+        id: 19,
+        title: "動作を説明する適切な命名",
+        objective: "意味のない名前では処理のタイミングがわかりません。きっかけと動作がわかる名前にしてください。",
+        hint: "単なる「handler」ではなく、「saveボタンをクリックした時の処理」のように具体的に命名しましょう。",
+        code: "const f1 = () => { save(); };",
+        correctCode: "const onSaveClick = () => { save(); };",
+        keywords: ["on", "handle"],
+        removeKeywords: ["f1", "handler1"],
+        explanation: "コードは人間が読むものです。名前が適切であれば、処理を一行ずつ追わなくても全体像が理解できるようになります。"
+    },
+    {
+        id: 20,
+        title: "最終的なコードのクリーンアップ",
+        objective: "開発用のログやメモが残っています。本番に出せる綺麗な状態にしてください。",
+        hint: "確認用のログ出力や、動作に関係のないコメントアウトをすべて削除しましょう。",
+        code: "const res = calc();\nconsole.log(res);\nreturn res;",
+        correctCode: "const res = calc();\nreturn res;",
+        keywords: [],
+        removeKeywords: ["console.log"],
+        explanation: "不要なログはパフォーマンスを微細に下げ、機密情報の漏洩リスクも生みます。完成したコードを磨き上げるのは、開発者の最後のマナーです。"
+    }
+];
