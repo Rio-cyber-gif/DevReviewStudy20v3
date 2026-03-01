@@ -37,7 +37,7 @@ const TermsModal = ({ isOpen, onClose }) => {
 
                     <div className="p-6 overflow-y-auto custom-scrollbar space-y-6 text-slate-300 text-sm leading-relaxed">
                         <p>
-                            本サービス（論理検証ラボ：Phase 2）は学習用アプリケーションです。以下の規約に同意の上でご利用ください。
+                            本サービス（論理検証ラボ：Phase 3）は学習用アプリケーションです。以下の規約に同意の上でご利用ください。
                         </p>
 
                         <h3 className="font-bold text-indigo-400 border-b border-slate-800 pb-2">第1条（適用）</h3>

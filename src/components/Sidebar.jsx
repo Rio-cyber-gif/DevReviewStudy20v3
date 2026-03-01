@@ -77,7 +77,7 @@ const Sidebar = ({ missions, currentMissionId, completedMissions, onSelectMissio
                     <div className="flex items-center justify-between">
                         <div onClick={handleLogoClick} className="text-xl font-bold text-indigo-400 flex items-center gap-2 select-none cursor-pointer group transition-all">
                             <BookOpen className="w-6 h-6 group-hover:rotate-12 transition-transform duration-300" />
-                            論理検証ラボ：Phase 2
+                            論理検証ラボ：Phase 3
                         </div>
                     </div>
                     <div className={`mt-1 h-4 transition-all duration-500 ${showMessage ? 'opacity-100' : 'opacity-0'}`}>

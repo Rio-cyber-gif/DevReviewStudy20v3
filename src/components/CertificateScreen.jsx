@@ -69,7 +69,7 @@ const CertificateScreen = ({
                             <h1 className="text-4xl sm:text-5xl font-black tracking-tighter bg-gradient-to-b from-white to-slate-400 bg-clip-text text-transparent">
                                 MASTER LOGICIAN
                             </h1>
-                            <div className="text-slate-500 font-mono text-xs tracking-[0.3em] mt-4">— 論理検証ラボ：Phase 2認定証 —</div>
+                            <div className="text-slate-500 font-mono text-xs tracking-[0.3em] mt-4">— 論理検証ラボ：Phase 3認定証 —</div>
                         </div>
 
                         {/* 重要：ポイント出力セクション */}

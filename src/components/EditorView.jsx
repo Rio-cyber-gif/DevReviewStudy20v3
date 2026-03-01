@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Terminal, Lightbulb, CheckCircle2, AlertTriangle, Code2, ArrowRight, Sparkles, BookOpen, Eye } from 'lucide-react';
 import Editor from 'react-simple-code-editor';
 
-// PrismJS：React/JSX用のハイライト設定に更新
+// PrismJS：インフラ編（YAML/Docker）とJS/JSXに対応
 import Prism from 'prismjs';
 import 'prismjs/components/prism-javascript';
 import 'prismjs/components/prism-jsx';
+import 'prismjs/components/prism-yaml';
+import 'prismjs/components/prism-docker';
 import 'prismjs/themes/prism-tomorrow.css';
 
 const EditorView = ({ mission, isVerified, isRevealed, isAnalyzing, onAnalyzeStart, onAnalyzeEnd, onSuccess, onFailure, onReveal, onNext, isLast }) => {
@@ -27,14 +29,23 @@ const EditorView = ({ mission, isVerified, isRevealed, isAnalyzing, onAnalyzeSta
 
     if (!mission) return null;
 
-    // React (JSX) 用のハイライト関数
-    const highlightCode = (input) => {
-        // Prism.languages.jsx があれば使用、なければ javascript、それもなければプレーンテキスト
-        const lang = Prism.languages.jsx || Prism.languages.javascript;
-        if (lang) {
-            return Prism.highlight(input, lang, 'jsx');
+    // 言語と種別の判定ロジック
+    const getEnvInfo = (input) => {
+        if (input.includes('FROM ') || input.includes('RUN ') || input.includes('WORKDIR')) {
+            return { lang: Prism.languages.docker, label: 'docker', fileName: 'Dockerfile', category: 'Infrastructure' };
+        } else if (input.includes('on:') || input.includes('jobs:') || input.includes('services:')) {
+            const isCompose = input.includes('services:');
+            return { lang: Prism.languages.yaml, label: 'yaml', fileName: isCompose ? 'docker-compose.yml' : 'workflow.yml', category: 'Automation' };
+        } else {
+            return { lang: Prism.languages.jsx, label: 'jsx', fileName: 'App.jsx', category: 'React Implementation' };
         }
-        return input;
+    };
+
+    const env = getEnvInfo(code);
+
+    const highlightCode = (input) => {
+        const info = getEnvInfo(input);
+        return Prism.highlight(input, info.lang, info.label);
     };
 
     const handleInspect = () => {
@@ -44,19 +55,10 @@ const EditorView = ({ mission, isVerified, isRevealed, isAnalyzing, onAnalyzeSta
 
         setTimeout(() => {
             onAnalyzeEnd();
-
             try {
-                const normalize = (str) =>
-                    str.replace(/[\u3000]/g, ' ')
-                        .replace(/\r\n|\r|\n/g, ' ')
-                        .replace(/\s+/g, ' ')
-                        .trim();
-
-                const userCode = normalize(code);
-                const original = normalize(originalCode);
-
-                if (userCode === original) {
-                    setErrorMsg("⚠ コードが修正されていません。ヒントを参考にコードを修正してください。");
+                const normalize = (str) => str.replace(/[\u3000]/g, ' ').trim();
+                if (normalize(code) === normalize(originalCode)) {
+                    setErrorMsg("⚠ コードが修正されていません。目標を確認して修正してください。");
                     onFailure(10);
                     return;
                 }
@@ -66,25 +68,19 @@ const EditorView = ({ mission, isVerified, isRevealed, isAnalyzing, onAnalyzeSta
                 const hasAllKeywords = keywords.length === 0 || keywords.every(kw => code.includes(kw));
                 const removedBadKeywords = removeKeywords.length === 0 || removeKeywords.every(kw => !code.includes(kw));
 
-                // React/JS用にコメント除去ロジックを修正 (// と /* */ を除去)
                 const strictNormalize = (str) =>
-                    str.replace(/[\u3000]/g, ' ')
-                        .replace(/\r\n|\r|\n/g, '')
-                        .replace(/\s+/g, '')
-                        .replace(/\/\/.*$/gm, '')           // 行コメント除去
-                        .replace(/\/\*[\s\S]*?\*\//g, '');  // ブロックコメント除去
+                    str.split('\n')
+                       .map(line => line.split('#')[0].split('//')[0].trimEnd())
+                       .filter(line => line.trim().length > 0)
+                       .join('\n');
 
-                const userStrict = strictNormalize(code);
-                const correctStrict = strictNormalize(mission.correctCode);
-                const isExactMatch = userStrict === correctStrict;
-
-                if (isExactMatch || (hasAllKeywords && removedBadKeywords)) {
+                if (strictNormalize(code) === strictNormalize(mission.correctCode) || (hasAllKeywords && removedBadKeywords)) {
                     onSuccess();
                 } else if (!hasAllKeywords) {
-                    setErrorMsg("論理エラー: 正解に必要な修正パターン（キーワード）が見つかりません。");
+                    setErrorMsg("論理エラー: 必要な設定項目または正しいキーワードが不足しています。");
                     onFailure(10);
                 } else if (!removedBadKeywords) {
-                    setErrorMsg("論理エラー: 修正すべき古いコードが残っています。");
+                    setErrorMsg("論理エラー: 修正すべき古い設定が残っています。");
                     onFailure(10);
                 } else {
                     setErrorMsg("論理エラー: 実装が演習の要件を満たしていません。");
@@ -123,14 +119,14 @@ const EditorView = ({ mission, isVerified, isRevealed, isAnalyzing, onAnalyzeSta
                     <section>
                         <div className="flex items-center gap-2 mb-3">
                             <Code2 className="w-4 h-4 text-indigo-400" />
-                            <h3 className="text-sm font-black uppercase tracking-widest text-indigo-400">コード比較</h3>
+                            <h3 className="text-sm font-black uppercase tracking-widest text-indigo-400">構成比較</h3>
                         </div>
                         <div className="flex gap-2 mb-3">
-                            <button onClick={() => setShowBefore(false)} className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${!showBefore ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800/50 text-slate-400'}`}>正解のコード</button>
-                            <button onClick={() => setShowBefore(true)} className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${showBefore ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'bg-slate-800/50 text-slate-400'}`}>元のコード</button>
+                            <button onClick={() => setShowBefore(false)} className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${!showBefore ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800/50 text-slate-400'}`}>正解の構成</button>
+                            <button onClick={() => setShowBefore(true)} className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${showBefore ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'bg-slate-800/50 text-slate-400'}`}>元の構成</button>
                         </div>
                         <div className="rounded-xl border p-4 font-mono text-sm bg-slate-950/70 border-slate-800 overflow-x-auto custom-scrollbar">
-                            <pre className="m-0"><code dangerouslySetInnerHTML={{ __html: highlightCode(showBefore ? originalCode : mission.correctCode) }} /></pre>
+                            <pre className="m-0 leading-relaxed"><code dangerouslySetInnerHTML={{ __html: highlightCode(showBefore ? originalCode : mission.correctCode) }} /></pre>
                         </div>
                     </section>
 
@@ -164,7 +160,7 @@ const EditorView = ({ mission, isVerified, isRevealed, isAnalyzing, onAnalyzeSta
                             <Eye className="w-6 h-6 text-sky-400" />
                             <h3 className="text-lg font-bold text-white">解答を表示しますか？</h3>
                         </div>
-                        <p className="text-slate-400 text-sm mb-6">正解のコードと解説を確認できます。このステップは完了扱いとなります。</p>
+                        <p className="text-slate-400 text-sm mb-6">正解の構成と論理解説を確認できます。このステップは完了扱いとなります。</p>
                         <div className="flex gap-3 justify-end">
                             <button onClick={() => setShowConfirm(false)} className="px-5 py-2 text-slate-400 hover:text-white transition-colors">キャンセル</button>
                             <button onClick={handleRevealConfirm} className="px-5 py-2 bg-sky-600 text-white rounded-lg font-bold">答えを見る</button>
@@ -189,9 +185,9 @@ const EditorView = ({ mission, isVerified, isRevealed, isAnalyzing, onAnalyzeSta
                 <div className="bg-slate-950/80 border-b border-slate-800 px-4 py-3 flex justify-between items-center">
                     <div className="flex items-center gap-2 text-slate-400 text-xs font-mono">
                         <Code2 className="w-4 h-4" />
-                        <span>App.jsx</span>
+                        <span>{mission.fileName || env.fileName}</span>
                     </div>
-                    <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">React Implementation</span>
+                    <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{env.category}</span>
                 </div>
 
                 <div className="flex-1 relative bg-[#0d1117] overflow-y-auto custom-scrollbar">
@@ -200,7 +196,7 @@ const EditorView = ({ mission, isVerified, isRevealed, isAnalyzing, onAnalyzeSta
                         onValueChange={c => setCode(c)}
                         highlight={highlightCode}
                         padding={20}
-                        style={{ fontFamily: '"Fira Code", monospace', fontSize: 16, lineHeight: '1.75' }}
+                        style={{ fontFamily: 'ui-monospace, SFMono-Regular, Consolas, monospace', fontSize: 16, lineHeight: '1.75', backgroundColor: 'transparent' }}
                         textareaClassName="focus:outline-none"
                     />
                 </div>
